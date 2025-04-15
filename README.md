@@ -10,8 +10,6 @@ Handling 200,000 requests per second (RPS) can truly be considered a high-load s
 
 Golang is an excellent choice for high-performance applications. It provides powerful concurrency tools, simplicity, reliability, and speed. The concepts discussed here are broadly applicable to high-performance systems, not limited to Go.
 
----
-
 ## Example Application
 
 Let's consider a simple recommendation feed service. To simplify, we assume this feed is updated offline. This means the feed is generated once at application startup and never changes during runtime. This pattern is common in recommendation systems to effectively handle high concurrency.
@@ -24,8 +22,6 @@ Thread Stats   Avg      Stdev     Max   +/- Stdev
 Latency       1.07ms    3.19ms 106.26ms   96.11%
 Requests/sec: 211042.29
 ```
-
----
 
 ## Business Logic
 
@@ -259,7 +255,7 @@ Requests/sec: 211042.29
 Transfer/sec:     36.14MB
 ```
 
-#### Interpreting the Benchmark:
+#### Interpreting the Benchmark
 
 The system was loaded with 5 million users. It successfully handled around 200,000 requests per second (RPS). That means the service can support all 5 million users if, on average, each user requests their feed once every 25 seconds (5,000,000 / 200,000 ≈ 25s). This is a realistic usage pattern for many real-world applications.
 
