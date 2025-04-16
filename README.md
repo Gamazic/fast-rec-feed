@@ -89,7 +89,7 @@ func (f *Service) RetrievFeed(ctx context.Context, r FeedRequest) ([]uint32, err
 			"persFeedSize", len(persFeed),
 			"requestedSize", r.Size)
 		if len(persFeed) == 0 {
-			return nil, fmt.Errorf("no feed items")
+			return nil, errors.New("no feed items")
 		}
 	}
 
