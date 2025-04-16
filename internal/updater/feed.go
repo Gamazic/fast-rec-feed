@@ -14,7 +14,7 @@ func UpdateFeed(ctx context.Context, feedStorage *storage.Storage, maxUserId uin
 	for i := range numUsers {
 		var newFeed [feed.TotalFeedSize]uint32
 
-		for j := 0; j < feed.TotalFeedSize; j++ {
+		for j := range feed.TotalFeedSize {
 			newFeed[j] = uint32(rand.Intn(int(maxVideoId))) + 1
 		}
 		feedStorage.SetFeed(ctx, uint32(i), newFeed)

@@ -20,7 +20,7 @@ func NewStorage() *Storage {
 	}
 }
 
-func (s *Storage) GetNextFeed(ctx context.Context, userId uint32, size uint8) ([]uint32, error) {
+func (s *Storage) NextFeed(ctx context.Context, userId uint32, size uint8) ([]uint32, error) {
 	// Get current offset for user
 	offsetVal, _ := s.offsets.Load(userId)
 	var offset uint16

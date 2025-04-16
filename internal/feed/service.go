@@ -6,15 +6,15 @@ import (
 	"log/slog"
 )
 
-type FeedService struct {
+type Service struct {
 	feedStorage       feedStorage
 	randomFeedStorage randomFeedStorage
 	errRecorder       errRecorder
 	logger            *slog.Logger
 }
 
-func NewFeedService(feedStorage feedStorage, randomFeedStorage randomFeedStorage, errRecorder errRecorder, logger *slog.Logger) *FeedService {
-	return &FeedService{
+func NewService(feedStorage feedStorage, randomFeedStorage randomFeedStorage, errRecorder errRecorder, logger *slog.Logger) *Service {
+	return &Service{
 		feedStorage:       feedStorage,
 		randomFeedStorage: randomFeedStorage,
 		errRecorder:       errRecorder,
@@ -32,7 +32,7 @@ type FeedRequest struct {
 	Size   uint8
 }
 
-func (f *FeedService) RetrievFeed(ctx context.Context, r FeedRequest) ([]uint32, error) {
+func (f *Service) RetrievFeed(ctx context.Context, r FeedRequest) ([]uint32, error) {
 	// Set default size if not specified
 	if r.Size == 0 {
 		r.Size = defailtNextFeedSize
@@ -40,21 +40,21 @@ func (f *FeedService) RetrievFeed(ctx context.Context, r FeedRequest) ([]uint32,
 
 	var randomFeedSize uint8
 	// Get personalized feed for user
-	persFeed, err := f.feedStorage.GetNextFeed(ctx, r.UserId, r.Size)
+	persFeed, err := f.feedStorage.NextFeed(ctx, r.UserId, r.Size)
 	if err != nil {
-		f.errRecorder.FeedError(ctx, r.UserId, err)
+		f.errRecorder.RecordFeedError(ctx, r.UserId, err)
 	}
 	randomFeedSize = r.Size - uint8(len(persFeed))
 
 	// Fill remaining items with random feed
 	if randomFeedSize > 0 {
-		randomFeed := f.randomFeedStorage.GetRandomFeed(ctx, randomFeedSize, persFeed)
+		randomFeed := f.randomFeedStorage.RandomFeed(ctx, randomFeedSize, persFeed)
 		persFeed = append(persFeed, randomFeed...)
 	}
 
 	// Validate final feed size
 	if len(persFeed) != int(r.Size) {
-		f.errRecorder.FeedError(ctx, r.UserId, fmt.Errorf("feed size is not equal to requested size"))
+		f.errRecorder.RecordFeedError(ctx, r.UserId, fmt.Errorf("feed size is not equal to requested size"))
 		f.logger.ErrorContext(ctx, "critical error feed size is not equal to requested size",
 			"userId", r.UserId,
 			"randomFeedSize", randomFeedSize,
@@ -69,13 +69,13 @@ func (f *FeedService) RetrievFeed(ctx context.Context, r FeedRequest) ([]uint32,
 }
 
 type feedStorage interface {
-	GetNextFeed(ctx context.Context, userId uint32, size uint8) ([]uint32, error)
+	NextFeed(ctx context.Context, userId uint32, size uint8) ([]uint32, error)
 }
 
 type randomFeedStorage interface {
-	GetRandomFeed(ctx context.Context, size uint8, excludeItems []uint32) []uint32
+	RandomFeed(ctx context.Context, size uint8, excludeItems []uint32) []uint32
 }
 
 type errRecorder interface {
-	FeedError(ctx context.Context, userId uint32, err error)
+	RecordFeedError(ctx context.Context, userId uint32, err error)
 }

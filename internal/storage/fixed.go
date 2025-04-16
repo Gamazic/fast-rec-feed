@@ -18,7 +18,7 @@ func NewGoldenFixedStorage() FixedStorage {
 	})
 }
 
-func (s FixedStorage) GetRandomFeed(ctx context.Context, size uint8, excludeItems []uint32) []uint32 {
+func (s FixedStorage) RandomFeed(ctx context.Context, size uint8, excludeItems []uint32) []uint32 {
 	if len(s) == 0 {
 		return nil
 	}
@@ -31,11 +31,7 @@ func (s FixedStorage) GetRandomFeed(ctx context.Context, size uint8, excludeItem
 	result := make([]uint32, size)
 	i := 0
 
-	for {
-		if len(excluded) == len(s) || i == int(size) {
-			break
-		}
-
+	for i != int(size) && len(excluded) != len(s) {
 		idx := rand.Intn(len(s))
 		item := s[idx]
 

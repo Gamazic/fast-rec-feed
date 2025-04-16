@@ -13,6 +13,6 @@ func NewDummyMetrics() *DummyMetrics {
 	return &DummyMetrics{}
 }
 
-func (d *DummyMetrics) FeedError(ctx context.Context, userId uint32, err error) {
+func (d *DummyMetrics) RecordFeedError(ctx context.Context, userId uint32, err error) {
 	d.errsCount.Add(1)
 }

@@ -16,7 +16,7 @@ import (
 )
 
 type App struct {
-	feedService *feed.FeedService
+	feedService *feed.Service
 	fiberApp    *fiber.App
 }
 
@@ -27,7 +27,7 @@ func NewApp() *App {
 	feedStorage := storage.NewStorage()
 	fixedFeedStorage := storage.NewGoldenFixedStorage()
 	metrics := metrics.NewDummyMetrics()
-	feedService := feed.NewFeedService(feedStorage, fixedFeedStorage, metrics, logger)
+	feedService := feed.NewService(feedStorage, fixedFeedStorage, metrics, logger)
 
 	app := &App{
 		feedService: feedService,
