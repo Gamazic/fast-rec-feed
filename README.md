@@ -28,15 +28,15 @@ Requests/sec: 211042.29
 Let's first define the service's business logic in code and describe struct `FeedService` that contains bussiness logic:
 
 ```go
-type FeedService struct {
+type Service struct {
 	feedStorage       feedStorage
 	randomFeedStorage randomFeedStorage
 	errRecorder       errRecorder
 	logger            *slog.Logger
 }
 
-func NewFeedService(feedStorage feedStorage, randomFeedStorage randomFeedStorage, errRecorder errRecorder, logger *slog.Logger) *FeedService {
-	return &FeedService{
+func NewService(feedStorage feedStorage, randomFeedStorage randomFeedStorage, errRecorder errRecorder, logger *slog.Logger) *Service {
+	return &Service{
 		feedStorage:       feedStorage,
 		randomFeedStorage: randomFeedStorage,
 		errRecorder:       errRecorder,
