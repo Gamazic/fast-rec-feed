@@ -45,22 +45,22 @@ func NewFeedService(feedStorage feedStorage, randomFeedStorage randomFeedStorage
 }
 
 type feedStorage interface {
-	GetNextFeed(ctx context.Context, userId uint32, size uint8) ([]uint32, error)
+	NextFeed(ctx context.Context, userId uint32, size uint8) ([]uint32, error)
 }
 
 type randomFeedStorage interface {
-	GetRandomFeed(ctx context.Context, size uint8, excludeItems []uint32) []uint32
+	RandomFeed(ctx context.Context, size uint8, excludeItems []uint32) []uint32
 }
 
 type errRecorder interface {
-	FeedError(ctx context.Context, userId uint32, err error)
+	RecordFeedError(ctx context.Context, userId uint32, err error)
 }
 ```
 
 Now, let's implement the method to retrieve the feed:
 
 ```go
-func (f *FeedService) RetrievFeed(ctx context.Context, r FeedRequest) ([]uint32, error) {
+func (f *Service) RetrievFeed(ctx context.Context, r FeedRequest) ([]uint32, error) {
 	// Set default size if not specified
 	if r.Size == 0 {
 		r.Size = defailtNextFeedSize
@@ -68,21 +68,21 @@ func (f *FeedService) RetrievFeed(ctx context.Context, r FeedRequest) ([]uint32,
 
 	var randomFeedSize uint8
 	// Get personalized feed for user
-	persFeed, err := f.feedStorage.GetNextFeed(ctx, r.UserId, r.Size)
+	persFeed, err := f.feedStorage.NextFeed(ctx, r.UserId, r.Size)
 	if err != nil {
-		f.errRecorder.FeedError(ctx, r.UserId, err)
+		f.errRecorder.RecordFeedError(ctx, r.UserId, err)
 	}
 	randomFeedSize = r.Size - uint8(len(persFeed))
 
 	// Fill remaining items with random feed
 	if randomFeedSize > 0 {
-		randomFeed := f.randomFeedStorage.GetRandomFeed(ctx, randomFeedSize, persFeed)
+		randomFeed := f.randomFeedStorage.RandomFeed(ctx, randomFeedSize, persFeed)
 		persFeed = append(persFeed, randomFeed...)
 	}
 
 	// Validate final feed size
 	if len(persFeed) != int(r.Size) {
-		f.errRecorder.FeedError(ctx, r.UserId, fmt.Errorf("feed size is not equal to requested size"))
+		f.errRecorder.RecordFeedError(ctx, r.UserId, fmt.Errorf("feed size is not equal to requested size"))
 		f.logger.ErrorContext(ctx, "critical error feed size is not equal to requested size",
 			"userId", r.UserId,
 			"randomFeedSize", randomFeedSize,
@@ -183,33 +183,33 @@ func NewStorage() *Storage {
 	}
 }
 
-func (s *Storage) GetNextFeed(ctx context.Context, userId uint32, size uint8) ([]uint32, error) {
-	// Retrieve current offset for the user
+func (s *Storage) NextFeed(ctx context.Context, userId uint32, size uint8) ([]uint32, error) {
+	// Get current offset for user
 	offsetVal, _ := s.offsets.Load(userId)
 	var offset uint16
 	if offsetVal != nil {
 		offset = offsetVal.(uint16)
 	}
 
-	// Return empty if the user has already seen all items
+	// Return empty if user has seen all items
 	if int(offset) >= feed.TotalFeedSize {
 		return nil, nil
 	}
 
-	// Calculate the range of items to return
+	// Calculate how many items to return, bounded by total feed size
 	lastItem := min(int(offset)+int(size), feed.TotalFeedSize)
 	if lastItem >= feed.TotalFeedSize {
 		s.numExceed.Add(1)
 	}
 
-	// Fetch the user's feed and extract the requested slice
+	// Get user's feed array and slice the requested portion
 	feed, ok := s.feeds[userId]
 	if !ok {
 		return nil, fmt.Errorf("no feed found for user %d", userId)
 	}
 	items := feed[offset:lastItem]
 
-	// Update the user's offset
+	// Update user's offset
 	s.offsets.Store(userId, uint16(lastItem))
 	return items, nil
 }
